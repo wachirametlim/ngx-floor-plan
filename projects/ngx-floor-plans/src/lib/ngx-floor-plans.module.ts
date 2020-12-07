@@ -1,12 +1,10 @@
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NgxFloorPlansComponent } from './ngx-floor-plans.component';
-
-
+import { EditorModule } from './editor/editor.module';
 
 @NgModule({
-  declarations: [NgxFloorPlansComponent],
-  imports: [
-  ],
-  exports: [NgxFloorPlansComponent]
+  declarations: [],
+  imports: [CommonModule],
+  exports: [EditorModule],
 })
-export class NgxFloorPlansModule { }
+export class NgxFloorPlansModule {}
