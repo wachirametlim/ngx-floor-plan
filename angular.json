@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "floor-plans": {
+    "floor-plan": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/floor-plans",
+            "outputPath": "dist/floor-plan",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -65,18 +65,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "floor-plans:build"
+            "browserTarget": "floor-plan:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "floor-plans:build:production"
+              "browserTarget": "floor-plan:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "floor-plans:build"
+            "browserTarget": "floor-plan:build"
           }
         },
         "test": {
@@ -113,47 +113,47 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "floor-plans:serve"
+            "devServerTarget": "floor-plan:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "floor-plans:serve:production"
+              "devServerTarget": "floor-plan:serve:production"
             }
           }
         }
       }
     },
-    "ngx-floor-plans": {
+    "ngx-floor-plan": {
       "projectType": "library",
-      "root": "projects/ngx-floor-plans",
-      "sourceRoot": "projects/ngx-floor-plans/src",
+      "root": "projects/ngx-floor-plan",
+      "sourceRoot": "projects/ngx-floor-plan/src",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "tsConfig": "projects/ngx-floor-plans/tsconfig.lib.json",
-            "project": "projects/ngx-floor-plans/ng-package.json"
+            "tsConfig": "projects/ngx-floor-plan/tsconfig.lib.json",
+            "project": "projects/ngx-floor-plan/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/ngx-floor-plans/tsconfig.lib.prod.json"
+              "tsConfig": "projects/ngx-floor-plan/tsconfig.lib.prod.json"
             }
           }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "projects/ngx-floor-plans/src/test.ts",
-            "tsConfig": "projects/ngx-floor-plans/tsconfig.spec.json",
-            "karmaConfig": "projects/ngx-floor-plans/karma.conf.js"
+            "main": "projects/ngx-floor-plan/src/test.ts",
+            "tsConfig": "projects/ngx-floor-plan/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-floor-plan/karma.conf.js"
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "projects/ngx-floor-plans/tsconfig.lib.json",
-              "projects/ngx-floor-plans/tsconfig.spec.json"
+              "projects/ngx-floor-plan/tsconfig.lib.json",
+              "projects/ngx-floor-plan/tsconfig.spec.json"
             ],
             "exclude": [
               "**/node_modules/**"
@@ -163,5 +163,5 @@
       }
     }
   },
-  "defaultProject": "floor-plans"
+  "defaultProject": "floor-plan"
 }

@@ -16,16 +16,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have as title 'floor-plans'`, () => {
+  it(`should have as title 'floor-plan'`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('floor-plans');
+    expect(app.title).toEqual('floor-plan');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.content span').textContent).toContain('floor-plans app is running!');
+    expect(compiled.querySelector('.content span').textContent).toContain('floor-plan app is running!');
   });
 });

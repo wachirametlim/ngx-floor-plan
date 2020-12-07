@@ -2,8 +2,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
-import { NgxFloorPlansModule } from 'projects/ngx-floor-plans/src/public-api';
-// import { NgxFloorPlansModule } from 'ngx-floor-plans';
+import { NgxFloorPlanModule } from 'projects/ngx-floor-plan/src/public-api';
+// import { NgxFloorPlansModule } from 'ngx-floor-plan';
 
 @NgModule({
   declarations: [
@@ -11,7 +11,7 @@ import { NgxFloorPlansModule } from 'projects/ngx-floor-plans/src/public-api';
   ],
   imports: [
     BrowserModule,
-    NgxFloorPlansModule
+    NgxFloorPlanModule
   ],
   providers: [],
   bootstrap: [AppComponent]

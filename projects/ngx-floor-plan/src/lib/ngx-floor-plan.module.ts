@@ -7,4 +7,4 @@ import { EditorModule } from './editor/editor.module';
   imports: [CommonModule],
   exports: [EditorModule],
 })
-export class NgxFloorPlansModule {}
+export class NgxFloorPlanModule {}

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'ngx-floor-plans',
+  selector: 'ngx-floor-plan',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.sass'],
 })

@@ -16,9 +16,9 @@
       "dom"
     ],
     "paths": {
-      "ngx-floor-plans": [
-        "dist/ngx-floor-plans/ngx-floor-plans",
-        "dist/ngx-floor-plans"
+      "ngx-floor-plan": [
+        "dist/ngx-floor-plan/ngx-floor-plan",
+        "dist/ngx-floor-plan"
       ]
     }
   }
