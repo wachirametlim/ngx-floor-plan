@@ -122,6 +122,45 @@
           }
         }
       }
+    },
+    "ngx-floor-plans": {
+      "projectType": "library",
+      "root": "projects/ngx-floor-plans",
+      "sourceRoot": "projects/ngx-floor-plans/src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "projects/ngx-floor-plans/tsconfig.lib.json",
+            "project": "projects/ngx-floor-plans/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-floor-plans/tsconfig.lib.prod.json"
+            }
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngx-floor-plans/src/test.ts",
+            "tsConfig": "projects/ngx-floor-plans/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-floor-plans/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngx-floor-plans/tsconfig.lib.json",
+              "projects/ngx-floor-plans/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }
   },
   "defaultProject": "floor-plans"
