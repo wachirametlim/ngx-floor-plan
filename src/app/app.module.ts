@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { NgxFloorPlanModule } from 'projects/ngx-floor-plan/src/public-api';
-// import { NgxFloorPlansModule } from 'ngx-floor-plan';
+// import { NgxFloorPlanModule } from 'ngx-floor-plan';
 
 @NgModule({
   declarations: [

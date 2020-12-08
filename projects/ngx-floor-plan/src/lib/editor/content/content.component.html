@@ -1,3 +1,16 @@
 <div class="content">
-  <p>ngx floor plans editor works!</p>
+  <svg #content xmlns="http://www.w3.org/2000/svg" style="width: 100%;height: 100%;position: absolute;top: 0;left: 0;right: 0;bottom: 0;">
+    <defs>
+      <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#AFAFAF" stroke-width="0.5"></path>
+      </pattern>
+      <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#AAA" stroke-width="1"></path>
+        <rect width="50" height="50" x="0" y="0" fill="url(#smallGrid)" />
+      </pattern>
+    </defs>
+    <g id="boxgrid">
+      <rect width="8000" height="5000" x="-3500" y="-2000" fill="url(#grid)" />
+    </g>
+  </svg>
 </div>
