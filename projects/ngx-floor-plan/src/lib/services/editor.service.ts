@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { WALL } from '../models/wall.model';
 import { SvgService } from './svg.service';
 
 @Injectable({
@@ -11,26 +12,19 @@ export class EditorService {
     el.innerHTML = '';
   }
 
-  generateWalls(el: SVGElement, walls): void {
-    // this.clearElement(el);
+  wallComputing(el: SVGElement, walls: WALL[]): void {
+    this.clearElement(el);
 
-    // for test create svg
-    const c = this.svg.circle(200, 200, 20);
-    el.append(
-      this.svg.create('path', {
-        d: c,
-        stroke: 'none',
-        fill: '#f00',
-        'stroke-width': 1,
-      })
-    );
-    el.append(
-      this.svg.create('path', {
-        d: 'M 110 110 H 190 V 190 H 110 L 110 110',
-        stroke: 'none',
-        fill: '#f00',
-        'stroke-width': 1,
-      })
-    );
+    for (const wall of walls) {
+      const c = this.svg.rectangle(wall.x, wall.y, wall.x + wall.width, wall.y + wall.height);
+      el.append(
+        this.svg.create('path', {
+          d: c,
+          stroke: 'none',
+          fill: '#f00',
+          'stroke-width': 1,
+        })
+      );
+    }
   }
 }

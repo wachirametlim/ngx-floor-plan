@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-
-export interface HISTORY {
-  walls: any[];
-  rooms: any[];
-  data: any[];
-}
+import { HISTORY } from '../models/history.model';
 
 const MAX_HISTOTY = 100;
 

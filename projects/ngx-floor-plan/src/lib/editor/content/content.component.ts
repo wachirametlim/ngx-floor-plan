@@ -5,6 +5,8 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { MOUSE_BUTTON } from '../../enums/mouse-button.enum';
+import { WALL } from '../../models/wall.model';
 import { EditorService } from '../../services/editor.service';
 
 @Component({
@@ -14,6 +16,10 @@ import { EditorService } from '../../services/editor.service';
 })
 export class ContentComponent implements OnInit, AfterViewInit {
   @ViewChild('content', { static: false }) contentEl: ElementRef;
+  @ViewChild('contentWalls', { static: false }) contentWallsEl: ElementRef;
+  private mblClicked = false;
+  private walls: WALL[] = [];
+  private selectedWallIndex: number;
 
   constructor(private editor: EditorService) {}
 
@@ -26,12 +32,32 @@ export class ContentComponent implements OnInit, AfterViewInit {
     svg.addEventListener('mousemove', this.onContentMouseMove);
   }
 
-  onContentMouseDown = (event): void => {
-    const svg: SVGElement = this.contentEl.nativeElement;
-    this.editor.generateWalls(svg, null);
+  onContentMouseDown = (event: MouseEvent): void => {
+    if (event.button === MOUSE_BUTTON.left) {
+      this.mblClicked = true;
+      this.walls.push(new WALL(event.offsetX, event.offsetY, 100, 20));
+      this.selectedWallIndex = this.walls.length - 1;
+      this.drawWalls();
+    }
   };
 
-  onContentMouseUp = (event): void => {};
+  onContentMouseUp = (event: MouseEvent): void => {
+    if (event.button === MOUSE_BUTTON.left) {
+      this.mblClicked = false;
+      this.selectedWallIndex = null;
+    }
+  };
 
-  onContentMouseMove = (event): void => {};
+  onContentMouseMove = (event: MouseEvent): void => {
+    if (this.mblClicked && this.selectedWallIndex !== null) {
+      this.walls[this.selectedWallIndex].x = event.offsetX;
+      this.walls[this.selectedWallIndex].y = event.offsetY;
+      this.drawWalls();
+    }
+  };
+
+  drawWalls(): void {
+    const svg: SVGElement = this.contentWallsEl.nativeElement;
+    this.editor.wallComputing(svg, this.walls);
+  }
 }
