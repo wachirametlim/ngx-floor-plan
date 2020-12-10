@@ -16,7 +16,10 @@ import { EditorService } from '../../services/editor.service';
 })
 export class ContentComponent implements OnInit, AfterViewInit {
   @ViewChild('content', { static: false }) contentEl: ElementRef;
-  @ViewChild('contentWalls', { static: false }) contentWallsEl: ElementRef;
+  @ViewChild('contentWalls', { static: false }) contentWallEl: ElementRef;
+  @ViewChild('contentWallTexts', { static: false }) contentWallTextEl: ElementRef;
+  @ViewChild('snapPoint', { static: false }) snapPointEl: ElementRef;
+
   private mblClicked = false;
   private walls: WALL[] = [];
   private selectedWallIndex: number;
@@ -30,34 +33,58 @@ export class ContentComponent implements OnInit, AfterViewInit {
     svg.addEventListener('mousedown', this.onContentMouseDown);
     svg.addEventListener('mouseup', this.onContentMouseUp);
     svg.addEventListener('mousemove', this.onContentMouseMove);
+    svg.addEventListener('mouseenter', this.onContentMouseEnter);
+    svg.addEventListener('mouseleave', this.onContentMouseLeave);
   }
 
   onContentMouseDown = (event: MouseEvent): void => {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = true;
-      this.walls.push(new WALL(event.offsetX, event.offsetY, 100, 20));
+      const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls);
+      const grid = this.editor.calculateSnap(event.offsetX, event.offsetY, 'on');
+
+      if (snap) {
+        this.walls.push(new WALL(snap.x, snap.y, snap.x, snap.y));
+      } else {
+        this.walls.push(new WALL(grid.x, grid.y, grid.x, grid.y));
+      }
       this.selectedWallIndex = this.walls.length - 1;
       this.drawWalls();
     }
-  };
+  }
 
   onContentMouseUp = (event: MouseEvent): void => {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = false;
       this.selectedWallIndex = null;
     }
-  };
+  }
 
   onContentMouseMove = (event: MouseEvent): void => {
     if (this.mblClicked && this.selectedWallIndex !== null) {
-      this.walls[this.selectedWallIndex].x = event.offsetX;
-      this.walls[this.selectedWallIndex].y = event.offsetY;
+      const grid = this.editor.calculateSnap(event.offsetX, event.offsetY, 'on');
+      const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls, 'draw');
+
+      this.walls[this.selectedWallIndex].x2 = snap ? snap.x : grid.x;
+      this.walls[this.selectedWallIndex].y2 = snap ? snap.y : grid.y;
       this.drawWalls();
     }
-  };
+
+    this.drawSnapPoint(event);
+  }
+
+  onContentMouseEnter = (event: MouseEvent): void => {}
+
+  onContentMouseLeave = (event: MouseEvent): void => {}
 
   drawWalls(): void {
-    const svg: SVGElement = this.contentWallsEl.nativeElement;
-    this.editor.wallComputing(svg, this.walls);
+    const svg: SVGElement = this.contentWallEl.nativeElement;
+    const svgText: SVGElement = this.contentWallTextEl.nativeElement;
+    this.editor.wallComputing(svg, svgText, this.walls);
+  }
+
+  drawSnapPoint(event: MouseEvent): void {
+    const svg: SVGElement = this.snapPointEl.nativeElement;
+    this.editor.snapPointComputing(svg, event, this.walls);
   }
 }

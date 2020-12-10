@@ -1,14 +1,9 @@
 export class WALL {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label?: string;
-
-  constructor(x: number, y: number, width: number, height: number) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-  }
+  constructor(
+    public x1: number,
+    public y1: number,
+    public x2: number,
+    public y2: number,
+    public label?: string
+  ) {}
 }
