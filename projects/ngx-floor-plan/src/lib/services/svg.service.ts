@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { EquationType } from '../enums/equation-type.type';
 import { SHAPE_TYPE } from '../enums/shape-type.type';
 
 @Injectable({
@@ -81,5 +82,60 @@ export class SvgService {
 
   measure(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  }
+
+  gap(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+    return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2);
+  }
+
+  btwn(value: number, p1: number, p2: number, round?: boolean): boolean {
+    if (round) {
+      value = Math.round(value);
+      p1 = Math.round(p1);
+      p2 = Math.round(p2);
+    }
+    return (value >= p1 && value <= p2) || (value >= p2 && value <= p1);
+  }
+
+  equation(
+    p1: { x: number; y: number },
+    p2: { x: number; y: number }
+  ): EquationType {
+    if (p2.x - p1.x === 0) {
+      return { m: 'v', b: p1.x };
+    }
+    if (p2.y - p1.y === 0) {
+      return { m: 'h', b: p1.y };
+    }
+    const m = (p2.y - p1.y) / (p2.x - p1.x);
+    const b = p1.y - m * p1.x; // b = y - mx from y = mx + b
+    return { m, b };
+  }
+
+  intersection(eq1: EquationType, eq2: EquationType): { x: number; y: number } {
+    if (eq1.m === 'v' && eq2.m === 'h') {
+      return { x: eq1.b, y: eq2.b };
+    }
+    if (eq1.m === 'h' && eq2.m === 'v') {
+      return { x: eq2.b, y: eq1.b };
+    }
+    if (eq1.m === 'v' && typeof eq2.m === 'number') {
+      return { x: eq1.b, y: eq2.m * eq1.b + eq2.b };
+    }
+    if (eq1.m === 'h' && typeof eq2.m === 'number') {
+      return { x: (eq1.b - eq2.b) / eq2.m, y: eq1.b };
+    }
+    if (eq2.m === 'v' && typeof eq1.m === 'number') {
+      return { x: eq2.b, y: eq1.m * eq2.b + eq1.b };
+    }
+    if (eq2.m === 'h' && typeof eq1.m === 'number') {
+      return { x: (eq2.b - eq1.b) / eq1.m, y: eq2.b };
+    }
+    if (typeof eq1.m === 'number' && typeof eq2.m === 'number') {
+      const x = (eq2.b - eq1.b) / (eq1.m - eq2.m);
+      const y = eq1.m * x - eq1.b;
+      return { x, y };
+    }
+    return null;
   }
 }

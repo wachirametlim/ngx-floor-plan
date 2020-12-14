@@ -17,8 +17,8 @@ export class EditorService {
     el.innerHTML = '';
   }
 
-  wallComputing(el: SVGElement, elText: SVGElement, walls: WALL[]): void {
-    this.clearElement(el);
+  wallDrawing(elWall: SVGElement, elText: SVGElement, walls: WALL[]): void {
+    this.clearElement(elWall);
     this.clearElement(elText);
 
     for (const wall of walls) {
@@ -30,12 +30,11 @@ export class EditorService {
         this.svg.calcPointDegs(wall.x2, wall.y2, width, degs + 90),
         this.svg.calcPointDegs(wall.x2, wall.y2, width, degs - 90)
       );
-      el.append(
+      elWall.append(
         this.svg.create('path', {
           d: path,
-          stroke: '#ffffff',
-          'stroke-width': 2,
-          fill: '#deb8a2',
+          fill: '#666',
+          stroke: 'none',
         })
       );
 
@@ -53,7 +52,7 @@ export class EditorService {
     }
   }
 
-  snapPointComputing(el: SVGElement, event: MouseEvent, walls: WALL[]): void {
+  snapPointDrawing(el: SVGElement, event: MouseEvent, walls: WALL[]): void {
     this.clearElement(el);
 
     const snapPoint = this.snapWallPoint(event.offsetX, event.offsetY, walls);
@@ -68,9 +67,25 @@ export class EditorService {
         })
       );
     }
+
+    const point = this.snapGrid(event.offsetX, event.offsetY, 'on');
+    const iPoint = this.snapDirectionPoint(point.x, point.y, walls);
+    if (iPoint) {
+      el.append(
+        this.svg.create('line', {
+          x1: point.x,
+          y1: point.y,
+          x2: iPoint.x,
+          y2: iPoint.y,
+          stroke: '#b5b5b5',
+          'stroke-width': 3,
+          'stroke-opacity': 0.5,
+        })
+      );
+    }
   }
 
-  calculateSnap(
+  snapGrid(
     x: number,
     y: number,
     state: 'on' | 'off'
@@ -112,5 +127,64 @@ export class EditorService {
       }
     }
     return snapW;
+  }
+
+  snapDirectionPoint(x, y, walls: WALL[]): { x: number; y: number } {
+    let iPoint: { x: number; y: number } = null;
+    let dis = Infinity;
+    for (const wall of walls) {
+
+      if (this.svg.degrees(x, y, wall.x1, wall.y1) % 45 === 0) {
+        const d = this.svg.measure({ x, y }, { x: wall.x1, y: wall.y1 });
+        if (d < dis) {
+          iPoint = { x: wall.x1, y: wall.y1 };
+          dis = d;
+        }
+      }
+
+      if (x === wall.x2 && y === wall.y2) {
+        continue;
+      }
+      if (this.svg.degrees(x, y, wall.x2, wall.y2) % 45 === 0) {
+        const d = this.svg.measure({ x, y }, { x: wall.x2, y: wall.y2 });
+        if (d < dis) {
+          iPoint = { x: wall.x2, y: wall.y2 };
+          dis = d;
+        }
+      }
+    }
+    return iPoint;
+  }
+
+  findRooms(elRoom: SVGElement, walls: WALL[]): void {
+    this.clearElement(elRoom);
+
+    const rooms = [];
+    for (let i = 0; i < walls.length; i++) {
+      const wall1 = walls[i];
+      for (let j = 0; j < walls.length; j++) {
+        if (i === j) { continue; }
+        const wall2 = walls[j];
+        const eq1 = this.svg.equation({ x: wall1.x1, y: wall1.y1 }, { x: wall1.x2, y: wall1.y2 });
+        const eq2 = this.svg.equation({ x: wall2.x1, y: wall2.y1 }, { x: wall2.x2, y: wall2.y2 });
+        const intersect = this.svg.intersection(eq1, eq2);
+        if (intersect) {
+          // console.log(intersect);
+          rooms.push(intersect);
+        }
+      }
+    }
+
+    for (const room of rooms) {
+      elRoom.append(
+        this.svg.create('circle', {
+          cx: room.x,
+          cy: room.y,
+          r: 5,
+          fill: '#f00',
+          stroke: 'none',
+        })
+      );
+    }
   }
 }

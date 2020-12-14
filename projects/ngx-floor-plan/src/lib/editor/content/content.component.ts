@@ -16,6 +16,7 @@ import { EditorService } from '../../services/editor.service';
 })
 export class ContentComponent implements OnInit, AfterViewInit {
   @ViewChild('content', { static: false }) contentEl: ElementRef;
+  @ViewChild('contentRooms', { static: false }) contentRoomEl: ElementRef;
   @ViewChild('contentWalls', { static: false }) contentWallEl: ElementRef;
   @ViewChild('contentWallTexts', { static: false }) contentWallTextEl: ElementRef;
   @ViewChild('snapPoint', { static: false }) snapPointEl: ElementRef;
@@ -41,7 +42,7 @@ export class ContentComponent implements OnInit, AfterViewInit {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = true;
       const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls);
-      const grid = this.editor.calculateSnap(event.offsetX, event.offsetY, 'on');
+      const grid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
 
       if (snap) {
         this.walls.push(new WALL(snap.x, snap.y, snap.x, snap.y));
@@ -62,7 +63,7 @@ export class ContentComponent implements OnInit, AfterViewInit {
 
   onContentMouseMove = (event: MouseEvent): void => {
     if (this.mblClicked && this.selectedWallIndex !== null) {
-      const grid = this.editor.calculateSnap(event.offsetX, event.offsetY, 'on');
+      const grid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
       const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls, 'draw');
 
       this.walls[this.selectedWallIndex].x2 = snap ? snap.x : grid.x;
@@ -78,13 +79,15 @@ export class ContentComponent implements OnInit, AfterViewInit {
   onContentMouseLeave = (event: MouseEvent): void => {}
 
   drawWalls(): void {
-    const svg: SVGElement = this.contentWallEl.nativeElement;
+    const svgWall: SVGElement = this.contentWallEl.nativeElement;
     const svgText: SVGElement = this.contentWallTextEl.nativeElement;
-    this.editor.wallComputing(svg, svgText, this.walls);
+    const svgRoom: SVGElement = this.contentRoomEl.nativeElement;
+    this.editor.wallDrawing(svgWall, svgText, this.walls);
+    this.editor.findRooms(svgRoom, this.walls);
   }
 
   drawSnapPoint(event: MouseEvent): void {
     const svg: SVGElement = this.snapPointEl.nativeElement;
-    this.editor.snapPointComputing(svg, event, this.walls);
+    this.editor.snapPointDrawing(svg, event, this.walls);
   }
 }
