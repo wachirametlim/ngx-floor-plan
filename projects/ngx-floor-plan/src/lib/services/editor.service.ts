@@ -159,32 +159,54 @@ export class EditorService {
   findRooms(elRoom: SVGElement, walls: WALL[]): void {
     this.clearElement(elRoom);
 
-    const rooms = [];
+    const intersects = [];
     for (let i = 0; i < walls.length; i++) {
       const wall1 = walls[i];
       for (let j = 0; j < walls.length; j++) {
         if (i === j) { continue; }
         const wall2 = walls[j];
+
         const eq1 = this.svg.equation({ x: wall1.x1, y: wall1.y1 }, { x: wall1.x2, y: wall1.y2 });
         const eq2 = this.svg.equation({ x: wall2.x1, y: wall2.y1 }, { x: wall2.x2, y: wall2.y2 });
         const intersect = this.svg.intersection(eq1, eq2);
-        if (intersect) {
-          // console.log(intersect);
-          rooms.push(intersect);
+        if (
+          intersect &&
+          this.svg.btwn(intersect.x, wall2.x1, wall2.x2, true) &&
+          this.svg.btwn(intersect.y, wall2.y1, wall2.y2, true) &&
+          this.svg.btwn(intersect.x, wall1.x1, wall1.x2, true) &&
+          this.svg.btwn(intersect.y, wall1.y1, wall1.y2, true)
+        ) {
+          intersects.push(intersect);
         }
       }
     }
 
-    for (const room of rooms) {
+    for (const intersect of intersects) {
       elRoom.append(
         this.svg.create('circle', {
-          cx: room.x,
-          cy: room.y,
+          cx: intersect.x,
+          cy: intersect.y,
           r: 5,
           fill: '#f00',
           stroke: 'none',
         })
       );
     }
+    // if (intersects.length > 0) {
+    //   let d = `M ${intersects[0].x},${intersects[0].y}`;
+    //   for (let i = 1; i < intersects.length; i++) {
+    //     const intersect = intersects[i];
+    //     d += ` L ${intersect.x},${intersect.y}`;
+    //   }
+    //   d += ' Z';
+    //   console.log(d);
+    //   elRoom.append(
+    //     this.svg.create('path', {
+    //       d,
+    //       fill: '#fff',
+    //       stroke: 'none',
+    //     })
+    //   );
+    // }
   }
 }

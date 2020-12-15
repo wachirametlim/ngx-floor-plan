@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { WALL } from 'dist/ngx-floor-plan/lib/models/wall.model';
 import { EquationType } from '../enums/equation-type.type';
 import { SHAPE_TYPE } from '../enums/shape-type.type';
 
@@ -107,8 +108,8 @@ export class SvgService {
     if (p2.y - p1.y === 0) {
       return { m: 'h', b: p1.y };
     }
-    const m = (p2.y - p1.y) / (p2.x - p1.x);
-    const b = p1.y - m * p1.x; // b = y - mx from y = mx + b
+    const m = (p2.y - p1.y) / (p2.x - p1.x); // m = (y2 - y1) / (x2 - x1)
+    const b = p1.y - m * p1.x; // b = y - mx
     return { m, b };
   }
 
@@ -132,8 +133,8 @@ export class SvgService {
       return { x: (eq2.b - eq1.b) / eq1.m, y: eq2.b };
     }
     if (typeof eq1.m === 'number' && typeof eq2.m === 'number') {
-      const x = (eq2.b - eq1.b) / (eq1.m - eq2.m);
-      const y = eq1.m * x - eq1.b;
+      const x = (eq2.b - eq1.b) / (eq1.m - eq2.m); // x = (b2 - b1) / (m1 - m2)
+      const y = eq1.m * x + eq1.b; // y = mx + b
       return { x, y };
     }
     return null;
