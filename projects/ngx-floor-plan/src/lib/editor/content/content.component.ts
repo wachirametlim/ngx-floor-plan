@@ -41,13 +41,16 @@ export class ContentComponent implements OnInit, AfterViewInit {
   onContentMouseDown = (event: MouseEvent): void => {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = true;
-      const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls);
-      const grid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
+      const snapGrid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
+      const snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls);
+      const snapNode = this.editor.snapWallNode(snapGrid.x, snapGrid.y, this.walls);
 
-      if (snap) {
-        this.walls.push(new WALL(snap.x, snap.y, snap.x, snap.y));
+      if (snapWall) {
+        this.walls.push(new WALL(snapWall.x, snapWall.y, snapWall.x, snapWall.y));
+      } else if (snapNode) {
+        this.walls.push(new WALL(snapNode.x, snapNode.y, snapNode.x, snapNode.y));
       } else {
-        this.walls.push(new WALL(grid.x, grid.y, grid.x, grid.y));
+        this.walls.push(new WALL(snapGrid.x, snapGrid.y, snapGrid.x, snapGrid.y));
       }
       this.selectedWallIndex = this.walls.length - 1;
       this.drawWalls();
@@ -63,11 +66,15 @@ export class ContentComponent implements OnInit, AfterViewInit {
 
   onContentMouseMove = (event: MouseEvent): void => {
     if (this.mblClicked && this.selectedWallIndex !== null) {
-      const grid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
-      const snap = this.editor.snapWallPoint(event.offsetX, event.offsetY, this.walls, 'draw');
+      const snapGrid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
+      const snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls, 'draw');
+      const snapNode = this.editor.snapWallNode(snapGrid.x, snapGrid.y, this.walls, 'draw');
 
-      this.walls[this.selectedWallIndex].x2 = snap ? snap.x : grid.x;
-      this.walls[this.selectedWallIndex].y2 = snap ? snap.y : grid.y;
+      console.log(snapWall, snapNode, snapGrid);
+      const snap = snapWall || snapNode || snapGrid;
+
+      this.walls[this.selectedWallIndex].x2 = snap.x;
+      this.walls[this.selectedWallIndex].y2 = snap.y;
       this.drawWalls();
     }
 

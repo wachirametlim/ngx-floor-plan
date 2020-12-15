@@ -89,7 +89,7 @@ export class SvgService {
     return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2);
   }
 
-  btwn(value: number, p1: number, p2: number, round?: boolean): boolean {
+  btwn(value: number, p1: number, p2: number, round?: 'round'): boolean {
     if (round) {
       value = Math.round(value);
       p1 = Math.round(p1);
@@ -138,5 +138,45 @@ export class SvgService {
       return { x, y };
     }
     return null;
+  }
+
+  nearPointOnEquation(
+    eq: EquationType,
+    point: { x: number; y: number }
+  ): { x: number; y: number; distance: number } {
+    if (eq.m === 'h') {
+      return {
+        x: point.x,
+        y: eq.b,
+        distance: Math.abs(eq.b - point.y),
+      };
+    }
+    if (eq.m === 'v') {
+      return {
+        x: eq.b,
+        y: point.y,
+        distance: Math.abs(eq.b - point.x),
+      };
+    }
+    const p1 = { x: point.x, y: eq.m * point.x + eq.b };
+    const p2 = { x: (point.y - eq.b) / eq.m, y: point.y };
+
+    const a = point.x - p1.x;
+    const b = point.y - p1.y;
+    const c = p2.x - p1.x;
+    const d = p2.y - p1.y;
+
+    const dot = a * c + b * d;
+    const len = Math.pow(c, 2) + Math.pow(d, 2);
+    const p = len ? dot / len : -1;
+
+    const x = p < 0 ? p1.x : p > 1 ? p2.x : p1.x + p * c;
+    const y = p < 0 ? p1.y : p > 1 ? p2.y : p1.y + p * d;
+
+    return {
+      x,
+      y,
+      distance: this.measure({ x, y }, point),
+    };
   }
 }

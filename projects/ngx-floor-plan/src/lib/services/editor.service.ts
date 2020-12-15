@@ -55,7 +55,8 @@ export class EditorService {
   snapPointDrawing(el: SVGElement, event: MouseEvent, walls: WALL[]): void {
     this.clearElement(el);
 
-    const snapPoint = this.snapWallPoint(event.offsetX, event.offsetY, walls);
+    const snapGrid = this.snapGrid(event.offsetX, event.offsetY, 'on');
+    const snapPoint = this.snapWallNode(snapGrid.x, snapGrid.y, walls);
     if (snapPoint) {
       const circle = this.svg.circle(snapPoint.x, snapPoint.y, 5);
       el.append(
@@ -66,9 +67,21 @@ export class EditorService {
           fill: '#57d2ff',
         })
       );
+    } else {
+      const snapWallPoint = this.snapWall(snapGrid.x, snapGrid.y, walls);
+      if (snapWallPoint) {
+        const circle = this.svg.circle(snapWallPoint.x, snapWallPoint.y, 5);
+        el.append(
+          this.svg.create('path', {
+            d: circle,
+            stroke: 'none',
+            fill: '#0f0',
+          })
+        );
+      }
     }
 
-    const point = this.snapGrid(event.offsetX, event.offsetY, 'on');
+    const point = this.snapGrid(snapGrid.x, snapGrid.y, 'on');
     const iPoint = this.snapDirectionPoint(point.x, point.y, walls);
     if (iPoint) {
       el.append(
@@ -101,20 +114,20 @@ export class EditorService {
     return { x: xGrid, y: yGrid };
   }
 
-  snapWallPoint(
+  snapWallNode(
     x: number,
     y: number,
     walls: WALL[],
     state?: 'draw'
   ): { x: number; y: number } {
-    let snapW: { x: number; y: number } = null;
+    let snap: { x: number; y: number } = null;
     for (let i = 0; i < walls.length; i++) {
       const wall = walls[i];
       let d = Infinity;
 
       d = this.svg.measure({ x, y }, { x: wall.x1, y: wall.y1 });
       if (d < this.mouseSnap) {
-        snapW = { x: wall.x1, y: wall.y1 };
+        snap = { x: wall.x1, y: wall.y1 };
       }
 
       // skip if state is drawing wall
@@ -123,17 +136,42 @@ export class EditorService {
       }
       d = this.svg.measure({ x, y }, { x: wall.x2, y: wall.y2 });
       if (d < this.mouseSnap) {
-        snapW = { x: wall.x2, y: wall.y2 };
+        snap = { x: wall.x2, y: wall.y2 };
       }
     }
-    return snapW;
+    return snap;
+  }
+
+  snapWall(x: number, y: number, walls: WALL[], state?: 'draw'): { x: number; y: number } {
+    let snap: { x: number; y: number } = null;
+
+    for (let i = 0; i < walls.length; i++) {
+      const wall = walls[i];
+      // skip if state is drawing wall
+      if (state === 'draw' && i + 1 === walls.length) {
+        continue;
+      }
+      const eq = this.svg.equation(
+        { x: wall.x1, y: wall.y1 },
+        { x: wall.x2, y: wall.y2 }
+      );
+      const nearPoint = this.svg.nearPointOnEquation(eq, { x, y });
+      if (
+        nearPoint &&
+        nearPoint.distance < this.mouseSnap &&
+        this.svg.btwn(nearPoint.x, wall.x1, wall.x2) &&
+        this.svg.btwn(nearPoint.y, wall.y1, wall.y2)
+      ) {
+        snap = { x: nearPoint.x, y: nearPoint.y };
+      }
+    }
+    return snap;
   }
 
   snapDirectionPoint(x, y, walls: WALL[]): { x: number; y: number } {
     let iPoint: { x: number; y: number } = null;
     let dis = Infinity;
     for (const wall of walls) {
-
       if (this.svg.degrees(x, y, wall.x1, wall.y1) % 45 === 0) {
         const d = this.svg.measure({ x, y }, { x: wall.x1, y: wall.y1 });
         if (d < dis) {
@@ -163,20 +201,36 @@ export class EditorService {
     for (let i = 0; i < walls.length; i++) {
       const wall1 = walls[i];
       for (let j = 0; j < walls.length; j++) {
-        if (i === j) { continue; }
+        if (i === j) {
+          continue;
+        }
         const wall2 = walls[j];
 
-        const eq1 = this.svg.equation({ x: wall1.x1, y: wall1.y1 }, { x: wall1.x2, y: wall1.y2 });
-        const eq2 = this.svg.equation({ x: wall2.x1, y: wall2.y1 }, { x: wall2.x2, y: wall2.y2 });
+        const eq1 = this.svg.equation(
+          { x: wall1.x1, y: wall1.y1 },
+          { x: wall1.x2, y: wall1.y2 }
+        );
+        const eq2 = this.svg.equation(
+          { x: wall2.x1, y: wall2.y1 },
+          { x: wall2.x2, y: wall2.y2 }
+        );
         const intersect = this.svg.intersection(eq1, eq2);
         if (
           intersect &&
-          this.svg.btwn(intersect.x, wall2.x1, wall2.x2, true) &&
-          this.svg.btwn(intersect.y, wall2.y1, wall2.y2, true) &&
-          this.svg.btwn(intersect.x, wall1.x1, wall1.x2, true) &&
-          this.svg.btwn(intersect.y, wall1.y1, wall1.y2, true)
+          this.svg.btwn(intersect.x, wall2.x1, wall2.x2, 'round') &&
+          this.svg.btwn(intersect.y, wall2.y1, wall2.y2, 'round') &&
+          this.svg.btwn(intersect.x, wall1.x1, wall1.x2, 'round') &&
+          this.svg.btwn(intersect.y, wall1.y1, wall1.y2, 'round')
         ) {
-          intersects.push(intersect);
+          const round = Math.round;
+          const isAdded = intersects.findIndex(
+            (its) =>
+              round(its.x) === round(intersect.x) &&
+              round(its.y) === round(intersect.y)
+          );
+          if (isAdded < 0) {
+            intersects.push(intersect);
+          }
         }
       }
     }
