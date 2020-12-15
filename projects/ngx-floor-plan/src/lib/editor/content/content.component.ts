@@ -20,6 +20,7 @@ export class ContentComponent implements OnInit, AfterViewInit {
   @ViewChild('contentWalls', { static: false }) contentWallEl: ElementRef;
   @ViewChild('contentWallTexts', { static: false }) contentWallTextEl: ElementRef;
   @ViewChild('snapPoint', { static: false }) snapPointEl: ElementRef;
+  @ViewChild('debug', { static: false }) debugEl: ElementRef;
 
   private mblClicked = false;
   private walls: WALL[] = [];
@@ -61,6 +62,8 @@ export class ContentComponent implements OnInit, AfterViewInit {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = false;
       this.selectedWallIndex = null;
+      this.walls = this.editor.splitWall(this.walls);
+      this.drawWalls();
     }
   }
 
@@ -70,9 +73,7 @@ export class ContentComponent implements OnInit, AfterViewInit {
       const snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls, 'draw');
       const snapNode = this.editor.snapWallNode(snapGrid.x, snapGrid.y, this.walls, 'draw');
 
-      console.log(snapWall, snapNode, snapGrid);
       const snap = snapWall || snapNode || snapGrid;
-
       this.walls[this.selectedWallIndex].x2 = snap.x;
       this.walls[this.selectedWallIndex].y2 = snap.y;
       this.drawWalls();

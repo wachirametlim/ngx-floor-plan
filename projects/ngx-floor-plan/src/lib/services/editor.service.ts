@@ -38,17 +38,21 @@ export class EditorService {
         })
       );
 
-      const l = this.svg.measure(
-        { x: wall.x1, y: wall.y1 },
-        { x: wall.x2, y: wall.y2 }
-      );
-      const textPos = this.svg.calcPointDegs(wall.x1, wall.y1, l / 2, degs);
+      const textPos = this.svg.calcPointDegs(wall.x1, wall.y1, 20, degs);
       const textShape = this.svg.create('text', {
         x: textPos.x,
         y: textPos.y,
       });
-      textShape.textContent = l.toFixed(2) + 'px';
+      textShape.textContent = `${wall.x1.toFixed(2)}, ${wall.y1.toFixed(2)}`;
       elText.append(textShape);
+
+      const textPos2 = this.svg.calcPointDegs(wall.x2, wall.y2, 20, degs - 180);
+      const textShape2 = this.svg.create('text', {
+        x: textPos2.x,
+        y: textPos2.y,
+      });
+      textShape2.textContent = `${wall.x2.toFixed(2)}, ${wall.y2.toFixed(2)}`;
+      elText.append(textShape2);
     }
   }
 
@@ -142,7 +146,12 @@ export class EditorService {
     return snap;
   }
 
-  snapWall(x: number, y: number, walls: WALL[], state?: 'draw'): { x: number; y: number } {
+  snapWall(
+    x: number,
+    y: number,
+    walls: WALL[],
+    state?: 'draw'
+  ): { x: number; y: number } {
     let snap: { x: number; y: number } = null;
 
     for (let i = 0; i < walls.length; i++) {
@@ -194,6 +203,44 @@ export class EditorService {
     return iPoint;
   }
 
+  splitWall(walls: WALL[]): WALL[] {
+    for (let i = 0; i < walls.length; i++) {
+      const wall1 = walls[i];
+      const len = Math.round(this.svg.measure({ x: wall1.x1, y: wall1.y1 }, { x: wall1.x2, y: wall1.y2 }));
+      const eq1 = this.svg.equation({ x: wall1.x1, y: wall1.y1 }, { x: wall1.x2, y: wall1.y2 });
+      for (let j = 0; j < walls.length; j++) {
+        if (i === j) {
+          continue;
+        }
+        const wall2 = walls[j];
+        const eq2 = this.svg.equation({ x: wall2.x1, y: wall2.y1 }, { x: wall2.x2, y: wall2.y2 });
+        const intersect = this.svg.intersection(eq1, eq2);
+        if (
+          intersect &&
+          this.svg.btwn(intersect.x, wall2.x1, wall2.x2, 'round') &&
+          this.svg.btwn(intersect.y, wall2.y1, wall2.y2, 'round') &&
+          this.svg.btwn(intersect.x, wall1.x1, wall1.x2, 'round') &&
+          this.svg.btwn(intersect.y, wall1.y1, wall1.y2, 'round')
+        ) {
+          const distance = Math.round(this.svg.measure({ x: wall1.x1, y: wall1.y1 }, intersect));
+          console.log(distance, len);
+          if (distance > 5 && distance < len) {
+            walls.push({
+              x1: intersect.x,
+              y1: intersect.y,
+              x2: wall1.x1,
+              y2: wall1.y1,
+            });
+
+            walls[i].x1 = intersect.x;
+            walls[i].y1 = intersect.y;
+          }
+        }
+      }
+    }
+    return walls;
+  }
+
   findRooms(elRoom: SVGElement, walls: WALL[]): void {
     this.clearElement(elRoom);
 
@@ -222,11 +269,10 @@ export class EditorService {
           this.svg.btwn(intersect.x, wall1.x1, wall1.x2, 'round') &&
           this.svg.btwn(intersect.y, wall1.y1, wall1.y2, 'round')
         ) {
-          const round = Math.round;
           const isAdded = intersects.findIndex(
             (its) =>
-              round(its.x) === round(intersect.x) &&
-              round(its.y) === round(intersect.y)
+              Math.round(its.x) === Math.round(intersect.x) &&
+              Math.round(its.y) === Math.round(intersect.y)
           );
           if (isAdded < 0) {
             intersects.push(intersect);
