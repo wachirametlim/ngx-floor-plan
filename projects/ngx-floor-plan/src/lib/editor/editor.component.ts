@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { TOOL } from '../enums/tool.enum';
 
 @Component({
   selector: 'ngx-floor-plan',
@@ -6,7 +7,13 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./editor.component.sass'],
 })
 export class EditorComponent implements OnInit {
+  public selectedTool: TOOL;
+
   constructor() {}
 
   ngOnInit(): void {}
+
+  onSelectionTool(tool: TOOL): void {
+    this.selectedTool = tool;
+  }
 }

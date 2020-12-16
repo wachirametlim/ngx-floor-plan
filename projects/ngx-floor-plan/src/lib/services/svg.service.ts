@@ -31,10 +31,10 @@ export class SvgService {
   }
 
   rectangle(
-    p1: { x: number; y: number },
-    p2: { x: number; y: number },
-    p3: { x: number; y: number },
-    p4: { x: number; y: number }
+    p1: { x: number, y: number },
+    p2: { x: number, y: number },
+    p3: { x: number, y: number },
+    p4: { x: number, y: number }
   ): string {
     return `M ${p1.x},${p1.y} L ${p2.x},${p2.y} L ${p3.x},${p3.y} L ${p4.x},${p4.y} Z`;
   }
@@ -62,7 +62,7 @@ export class SvgService {
     sy: number,
     length: number,
     degs: number
-  ): { x: number; y: number } {
+  ): { x: number, y: number } {
     const x = sx + length * Math.cos((degs * Math.PI) / 180);
     const y = sy + length * Math.sin((degs * Math.PI) / 180);
     return { x, y };
@@ -75,17 +75,17 @@ export class SvgService {
     sy: number,
     length: number,
     rads: number
-  ): { x: number; y: number } {
+  ): { x: number, y: number } {
     const x = sx + length * Math.cos(rads);
     const y = sy + length * Math.sin(rads);
     return { x, y };
   }
 
-  measure(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+  measure(p1: { x: number, y: number }, p2: { x: number, y: number }): number {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
   }
 
-  gap(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+  gap(p1: { x: number, y: number }, p2: { x: number, y: number }): number {
     return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2);
   }
 
@@ -99,8 +99,8 @@ export class SvgService {
   }
 
   equation(
-    p1: { x: number; y: number },
-    p2: { x: number; y: number }
+    p1: { x: number, y: number },
+    p2: { x: number, y: number }
   ): EquationType {
     if (p2.x - p1.x === 0) {
       return { m: 'v', b: p1.x };
@@ -113,7 +113,7 @@ export class SvgService {
     return { m, b };
   }
 
-  intersection(eq1: EquationType, eq2: EquationType): { x: number; y: number } {
+  intersection(eq1: EquationType, eq2: EquationType): { x: number, y: number } {
     if (eq1.m === 'v' && eq2.m === 'h') {
       return { x: eq1.b, y: eq2.b };
     }
@@ -142,8 +142,8 @@ export class SvgService {
 
   nearPointOnEquation(
     eq: EquationType,
-    point: { x: number; y: number }
-  ): { x: number; y: number; distance: number } {
+    point: { x: number, y: number }
+  ): { x: number, y: number, distance: number } {
     if (eq.m === 'h') {
       return {
         x: point.x,

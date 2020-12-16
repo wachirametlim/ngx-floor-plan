@@ -1,4 +1,4 @@
 <div class="container">
-  <fp-tool-panel></fp-tool-panel>
-  <fp-content></fp-content>
+  <fp-tool-panel (onSelectionTool)="onSelectionTool($event)"></fp-tool-panel>
+  <fp-content [selectedTool]="selectedTool"></fp-content>
 </div>
