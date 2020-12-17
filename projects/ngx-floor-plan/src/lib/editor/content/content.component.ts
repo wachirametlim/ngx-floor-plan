@@ -40,8 +40,6 @@ export class ContentComponent implements OnInit, AfterViewInit {
     svg.addEventListener('mousedown', this.onContentMouseDown);
     svg.addEventListener('mouseup', this.onContentMouseUp);
     svg.addEventListener('mousemove', this.onContentMouseMove);
-    svg.addEventListener('mouseenter', this.onContentMouseEnter);
-    svg.addEventListener('mouseleave', this.onContentMouseLeave);
   }
 
   canvasClass(): string {
@@ -60,13 +58,8 @@ export class ContentComponent implements OnInit, AfterViewInit {
 
       switch (this.selectedTool) {
         case TOOL.wall: {
-          if (snapWall) {
-            this.walls.push(new WALL(snapWall.x, snapWall.y, snapWall.x, snapWall.y));
-          } else if (snapNode) {
-            this.walls.push(new WALL(snapNode.x, snapNode.y, snapNode.x, snapNode.y));
-          } else {
-            this.walls.push(new WALL(snapGrid.x, snapGrid.y, snapGrid.x, snapGrid.y));
-          }
+          const snap = snapWall || snapNode || snapGrid;
+          this.walls.push(new WALL(snap.x, snap.y, snap.x, snap.y));
           this.selectedWallIndex = this.walls.length - 1;
           break;
         }
@@ -128,17 +121,13 @@ export class ContentComponent implements OnInit, AfterViewInit {
     this.drawSnapPoint(event);
   }
 
-  onContentMouseEnter = (event: MouseEvent): void => {}
-
-  onContentMouseLeave = (event: MouseEvent): void => {}
-
   drawWalls(): void {
     const svgWall: SVGElement = this.contentWallEl.nativeElement;
     const svgNode: SVGElement = this.contentWallNodeEl.nativeElement;
     const svgText: SVGElement = this.contentWallTextEl.nativeElement;
     const svgRoom: SVGElement = this.contentRoomEl.nativeElement;
-    this.editor.wallDrawing(svgWall, svgText, this.walls);
-    this.editor.wallNodeDrawing(svgNode, this.walls);
+    this.editor.wallDrawing(svgWall, this.walls);
+    this.editor.wallNodeDrawing(svgNode, svgText, this.walls);
     this.editor.roomDrawing(svgRoom, this.walls);
   }
 

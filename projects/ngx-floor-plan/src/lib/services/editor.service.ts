@@ -18,9 +18,8 @@ export class EditorService {
     el.innerHTML = '';
   }
 
-  wallDrawing(elWall: SVGElement, elText: SVGElement, walls: WALL[]): void {
+  wallDrawing(elWall: SVGElement, walls: WALL[]): void {
     this.clearElement(elWall);
-    this.clearElement(elText);
 
     for (const wall of walls) {
       const degs = this.svg.degrees(wall.x1, wall.y1, wall.x2, wall.y2);
@@ -38,42 +37,14 @@ export class EditorService {
           stroke: 'none',
         })
       );
-
-      const textPos = this.svg.calcPointDegs(wall.x1, wall.y1, 20, degs);
-      const textShape = this.svg.create('text', {
-        x: textPos.x,
-        y: textPos.y,
-      });
-      textShape.textContent = `${wall.x1.toFixed(2)}, ${wall.y1.toFixed(2)}`;
-      elText.append(textShape);
-
-      const textPos2 = this.svg.calcPointDegs(wall.x2, wall.y2, 20, degs - 180);
-      const textShape2 = this.svg.create('text', {
-        x: textPos2.x,
-        y: textPos2.y,
-      });
-      textShape2.textContent = `${wall.x2.toFixed(2)}, ${wall.y2.toFixed(2)}`;
-      elText.append(textShape2);
     }
   }
 
-  wallNodeDrawing(elNode: SVGElement, walls: WALL[]): void {
+  wallNodeDrawing(elNode: SVGElement, elText: SVGElement, walls: WALL[]): void {
     this.clearElement(elNode);
-    const nodes: { x: number; y: number }[] = [];
-    for (const wall of walls) {
-      const inNode1 = nodes.find((n) =>
-        this.nearPoint(n, { x: wall.x1, y: wall.y1 }, 1)
-      );
-      const inNode2 = nodes.find((n) =>
-        this.nearPoint(n, { x: wall.x2, y: wall.y2 }, 1)
-      );
-      if (!inNode1) {
-        nodes.push({ x: wall.x1, y: wall.y1 });
-      }
-      if (!inNode2) {
-        nodes.push({ x: wall.x2, y: wall.y2 });
-      }
-    }
+    this.clearElement(elText);
+
+    const nodes = this.nodeList(walls);
     for (const node of nodes) {
       elNode.append(
         this.svg.create('circle', {
@@ -85,6 +56,13 @@ export class EditorService {
           'stroke-width': '2',
         })
       );
+
+      const textShape = this.svg.create('text', {
+        x: node.x,
+        y: node.y,
+      });
+      textShape.textContent = `${node.x.toFixed(2)}, ${node.y.toFixed(2)}`;
+      elText.append(textShape);
     }
   }
 
@@ -284,7 +262,7 @@ export class EditorService {
     return walls;
   }
 
-  intersectionPoint(walls: WALL[]): { x: number; y: number }[] {
+  intersectionPoints(walls: WALL[]): { x: number; y: number }[] {
     const intersects: { x: number; y: number }[] = [];
     for (let i = 0; i < walls.length; i++) {
       const wall1 = walls[i];
@@ -369,56 +347,139 @@ export class EditorService {
     });
   }
 
-  findRoom(
-    point: { x: number; y: number },
-    walls: WALL[]
-  ): { x: number; y: number }[] {
-    const nextPoints: { x: number; y: number }[] = [];
-    // connected next point
+  nodeList(walls: WALL[]): { x: number; y: number }[] {
+    const nodes: { x: number; y: number }[] = [];
     for (const wall of walls) {
-      if (point.x === wall.x1 && point.y === wall.y1) {
-        nextPoints.push({ x: wall.x2, y: wall.y2 });
+      const inNodeFrom = nodes.find((n) =>
+        this.nearPoint(n, { x: wall.x1, y: wall.y1 }, 1)
+      );
+      const inNodeTo = nodes.find((n) =>
+        this.nearPoint(n, { x: wall.x2, y: wall.y2 }, 1)
+      );
+      if (!inNodeFrom) {
+        nodes.push({ x: wall.x1, y: wall.y1 });
       }
-      if (point.x === wall.x2 && point.y === wall.y2) {
-        nextPoints.push({ x: wall.x1, y: wall.y1 });
+      if (!inNodeTo) {
+        nodes.push({ x: wall.x2, y: wall.y2 });
       }
     }
-    return nextPoints;
+    return nodes;
+  }
+
+  junctionPoint(
+    fromPoint: { x: number; y: number },
+    walls: WALL[]
+  ): { x: number; y: number; junction: { x: number; y: number }[] } {
+    const junction: { x: number; y: number }[] = [];
+    // connected next point
+    for (const wall of walls) {
+      if (fromPoint.x === wall.x1 && fromPoint.y === wall.y1) {
+        junction.push({ x: wall.x2, y: wall.y2 });
+      }
+      if (fromPoint.x === wall.x2 && fromPoint.y === wall.y2) {
+        junction.push({ x: wall.x1, y: wall.y1 });
+      }
+    }
+    return {
+      x: fromPoint.x,
+      y: fromPoint.y,
+      junction,
+    };
+  }
+
+  findWay(
+    nodes: { x: number; y: number; junction: { x: number; y: number }[] }[],
+    startNode: { x: number; y: number; junction: { x: number; y: number }[] },
+    prevNode: { x: number; y: number; junction: { x: number; y: number }[] },
+    index: number, // index of node to start finding
+    seg: number,
+    result: { x: number; y: number }[]
+  ): { x: number; y: number }[] {
+    if (index >= nodes.length) {
+      return result;
+    }
+    const node = nodes[index];
+    if (seg >= node.junction.length) {
+      return result;
+    }
+    const j = node.junction[seg];
+    const nextNode = nodes.find((n) => n.x === j.x && n.y === j.y);
+    if (!nextNode) {
+      return result;
+    }
+    // check next node is not start node
+    const isStart = startNode.x === j.x && startNode.y === j.y;
+    const isPrev = prevNode.x === j.x && prevNode.y === j.y;
+    if (!isStart && !isPrev) {
+      result = this.findWay(nodes, startNode, node, index + 1, seg, result);
+      result.push(j);
+    } else {
+      result = this.findWay(nodes, startNode, node, index, seg + 1, result);
+      if (isStart && index === nodes.length - 1) {
+        result.push(j);
+      }
+    }
+
+    return result;
+  }
+
+  findRoom(
+    nodes: { x: number; y: number; junction: { x: number; y: number }[] }[]
+  ): { x: number; y: number }[][] {
+    const ROOM_NODE: { x: number; y: number }[][] = [];
+    const ROOM: { x: number; y: number }[][] = [];
+
+    for (const node of nodes) {
+      const inRoomNode = ROOM_NODE.find((r) =>
+        r.find((p) => p.x === node.x && p.y === node.y)
+      );
+      if (inRoomNode) {
+        continue;
+      }
+      const room = this.findWay(nodes, node, node, 0, 0, []);
+      room.push({ x: node.x, y: node.y });
+      console.log(node, room);
+      ROOM_NODE.push(room);
+
+      if (
+        room[0].x === room[room.length - 1].x &&
+        room[0].y === room[room.length - 1].y
+      ) {
+        ROOM.push(room);
+      }
+    }
+    return ROOM;
   }
 
   roomDrawing(elRoom: SVGElement, walls: WALL[]): void {
-    const nodes = this.intersectionPoint(walls);
+    this.clearElement(elRoom);
+    const nodes = this.nodeList(walls);
 
-    const rooms = [];
+    const junctionPoints: {
+      x: number;
+      y: number;
+      junction: { x: number; y: number }[];
+    }[] = [];
     for (const node of nodes) {
-      const p = this.findRoom(node, walls);
-      console.log(node, ': ', p);
+      const junction = this.junctionPoint(node, walls);
+      junctionPoints.push(junction);
     }
+    const rooms = this.findRoom(junctionPoints);
     console.log('------------------------');
 
-    // for (const wall of walls) {
-    //   const connectedWall: WALL[] = walls.filter(
-    //     (w) =>
-    //       ((w.x1 === wall.x1 && w.y1 === wall.y1) ||
-    //       (w.x2 === wall.x2 && w.y2 === wall.y2))
-    //   );
-    //   console.log(connectedWall);
-    // }
-    // if (intersects.length > 0) {
-    //   let d = `M ${intersects[0].x},${intersects[0].y}`;
-    //   for (let i = 1; i < intersects.length; i++) {
-    //     const intersect = intersects[i];
-    //     d += ` L ${intersect.x},${intersect.y}`;
-    //   }
-    //   d += ' Z';
-    //   console.log(d);
-    //   elRoom.append(
-    //     this.svg.create('path', {
-    //       d,
-    //       fill: '#fff',
-    //       stroke: 'none',
-    //     })
-    //   );
-    // }
+    for (const room of rooms) {
+      let d = `M ${room[0].x},${room[0].y}`;
+      for (const r of room) {
+        d += ` L ${r.x},${r.y}`;
+      }
+      d += ' Z';
+      elRoom.append(
+        this.svg.create('path', {
+          d,
+          fill: '#fff',
+          stroke: 'none',
+        })
+      );
+    }
   }
 }
