@@ -390,34 +390,27 @@ export class EditorService {
   findWay(
     nodes: { x: number; y: number; junction: { x: number; y: number }[] }[],
     startNode: { x: number; y: number; junction: { x: number; y: number }[] },
-    prevNode: { x: number; y: number; junction: { x: number; y: number }[] },
-    index: number, // index of node to start finding
-    seg: number,
-    result: { x: number; y: number }[]
+    nextNode?: { x: number; y: number; junction: { x: number; y: number }[] },
+    prevNode?: { x: number; y: number; junction: { x: number; y: number }[] },
+    seg: number = 0,
+    result: { x: number; y: number }[] = []
   ): { x: number; y: number }[] {
-    if (index >= nodes.length) {
-      return result;
-    }
-    const node = nodes[index];
-    if (seg >= node.junction.length) {
-      return result;
-    }
+    const node = nextNode || startNode;
+
+    if (seg >= node.junction.length) { return result; }
     const j = node.junction[seg];
-    const nextNode = nodes.find((n) => n.x === j.x && n.y === j.y);
-    if (!nextNode) {
-      return result;
-    }
+    const destNode = nodes.find((n) => n.x === j.x && n.y === j.y);
+    if (!destNode) { return result; }
     // check next node is not start node
-    const isStart = startNode.x === j.x && startNode.y === j.y;
-    const isPrev = prevNode.x === j.x && prevNode.y === j.y;
-    if (!isStart && !isPrev) {
-      result = this.findWay(nodes, startNode, node, index + 1, seg, result);
+    const isStartNode = startNode.x === j.x && startNode.y === j.y;
+    const isPrevNode = prevNode && (prevNode.x === j.x && prevNode.y === j.y);
+    if (!isStartNode && !isPrevNode) {
+      result = this.findWay(nodes, startNode, destNode, node, seg, result);
+      result.push(j);
+    } else if (seg === node.junction.length - 1 && !isPrevNode) {
       result.push(j);
     } else {
-      result = this.findWay(nodes, startNode, node, index, seg + 1, result);
-      if (isStart && index === nodes.length - 1) {
-        result.push(j);
-      }
+      result = this.findWay(nodes, startNode, node, prevNode, seg + 1, result);
     }
 
     return result;
@@ -436,12 +429,13 @@ export class EditorService {
       if (inRoomNode) {
         continue;
       }
-      const room = this.findWay(nodes, node, node, 0, 0, []);
+      const room = this.findWay(nodes, node);
       room.push({ x: node.x, y: node.y });
       console.log(node, room);
       ROOM_NODE.push(room);
 
       if (
+        room.length > 0 &&
         room[0].x === room[room.length - 1].x &&
         room[0].y === room[room.length - 1].y
       ) {
