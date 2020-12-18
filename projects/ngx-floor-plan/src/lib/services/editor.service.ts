@@ -395,9 +395,10 @@ export class EditorService {
     prevNode?: { x: number; y: number; junction: { x: number; y: number }[] },
     seg: number = 0,
     result: { x: number; y: number }[] = [],
+    passNode: { x: number; y: number }[] = [],
+    passSeg: number[] = [],
   ): { x: number; y: number }[] {
     const node = nextNode || startNode;
-
     // if complete room or end segment
     if (
       (result.length > 0 &&
@@ -413,21 +414,37 @@ export class EditorService {
     // check next node is not start node
     const isStartNode = startNode.x === j.x && startNode.y === j.y;
     const isPrevNode = prevNode && prevNode.x === j.x && prevNode.y === j.y;
+    const passedIndex = passNode.findIndex((n) => n.x === j.x && n.y === j.y);
+
+    if (!isPrevNode && !isStartNode) {
+      passNode.push({ x: node.x, y: node.y });
+      passSeg.push(seg);
+    }
+
+    if (isPrevNode) {
+      result = this.findWay(nodes, startNode, node, prevNode, ++seg, result, passNode, passSeg);
+    } else if (isStartNode) {
+      result.push(j);
+    } else if (passedIndex >= 0) {
+      const passed = nodes.find((n) => n.x === passNode[passedIndex].x && n.y === passNode[passedIndex].y);
+      const prev = nodes.find((n) => n.x === passNode[passedIndex - 1].x && n.y === passNode[passedIndex - 1].y);
+      const s = passSeg[passedIndex];
+      passNode = passNode.slice(0, passedIndex);
+      passSeg = passSeg.slice(0, passedIndex);
+
+      result = this.findWay(nodes, startNode, passed, prev, s + 1, result, passNode, passSeg);
+      result.push({ x: passed.x, y: passed.y });
+    } else {
+      result = this.findWay(nodes, startNode, destNode, node, 0, result, passNode, passSeg);
+      result.push(j);
+    }
     console.log(
       node,
       destNode,
       isPrevNode ? 'Prev' : 'Not prev',
       isStartNode ? 'Start' : 'Not start',
+      passedIndex >= 0 ? 'Passed' : 'Not passed'
     );
-    if (isPrevNode) {
-      result = this.findWay(nodes, startNode, node, prevNode, ++seg, result);
-    } else if (isStartNode) {
-      result.push(j);
-    } else {
-      result = this.findWay(nodes, startNode, destNode, node, 0, result);
-      result.push(j);
-    }
-
     return result;
   }
 
@@ -439,22 +456,21 @@ export class EditorService {
 
     for (const node of nodes) {
       const inRoomNode = ROOM_NODE.some((r) =>
-        r.some((p) => p.x === node.x && p.y === node.y)
+      r.some((p) => p.x === node.x && p.y === node.y)
       );
-      if (inRoomNode) {
-        continue;
-      }
-      console.log('find from node', node);
+      console.log('find from node', node, inRoomNode, ROOM_NODE);
+      if (inRoomNode) { continue; }
       const room = this.findWay(nodes, node);
-      room.push({ x: node.x, y: node.y });
-      ROOM_NODE.push(room);
-
-      if (
-        room.length > 0 &&
-        room[0].x === room[room.length - 1].x &&
-        room[0].y === room[room.length - 1].y
-      ) {
-        ROOM.push(room);
+      if (room){
+        room.push({ x: node.x, y: node.y });
+        ROOM_NODE.push(room);
+        if (
+          room.length > 0 &&
+          room[0].x === room[room.length - 1].x &&
+          room[0].y === room[room.length - 1].y
+        ) {
+          ROOM.push(room);
+        }
       }
     }
     return ROOM;
