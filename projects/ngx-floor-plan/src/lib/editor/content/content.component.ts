@@ -38,8 +38,8 @@ export class ContentComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     const svg: SVGElement = this.contentEl.nativeElement;
     svg.addEventListener('mousedown', this.onContentMouseDown);
-    svg.addEventListener('mouseup', this.onContentMouseUp);
     svg.addEventListener('mousemove', this.onContentMouseMove);
+    svg.addEventListener('mouseup', this.onContentMouseUp);
   }
 
   canvasClass(): string {
@@ -76,7 +76,6 @@ export class ContentComponent implements OnInit, AfterViewInit {
           }
         }
       }
-      this.drawWalls();
     }
   }
 
@@ -96,6 +95,7 @@ export class ContentComponent implements OnInit, AfterViewInit {
       this.walls = this.editor.filterNoWall(this.walls);
       this.walls = this.editor.filterDupicateWall(this.walls);
       this.drawWalls();
+      this.drawRooms();
     }
   }
 
@@ -122,13 +122,19 @@ export class ContentComponent implements OnInit, AfterViewInit {
   }
 
   drawWalls(): void {
+    const svgRoom: SVGElement = this.contentRoomEl.nativeElement;
     const svgWall: SVGElement = this.contentWallEl.nativeElement;
     const svgNode: SVGElement = this.contentWallNodeEl.nativeElement;
     const svgText: SVGElement = this.contentWallTextEl.nativeElement;
-    const svgRoom: SVGElement = this.contentRoomEl.nativeElement;
+    this.editor.clearElement(svgRoom);
     this.editor.wallDrawing(svgWall, this.walls);
     this.editor.wallNodeDrawing(svgNode, svgText, this.walls);
+  }
+
+  drawRooms(): void {
+    const svgRoom: SVGElement = this.contentRoomEl.nativeElement;
     this.editor.roomDrawing(svgRoom, this.walls);
+
   }
 
   drawSnapPoint(event: MouseEvent): void {

@@ -60,6 +60,7 @@ export class EditorService {
       const textShape = this.svg.create('text', {
         x: node.x,
         y: node.y,
+        'font-weight': 'bold',
       });
       textShape.textContent = `${node.x.toFixed(2)}, ${node.y.toFixed(2)}`;
       elText.append(textShape);
@@ -242,10 +243,10 @@ export class EditorService {
           this.svg.btwn(intersect.x, wall1.x1, wall1.x2, 'round') &&
           this.svg.btwn(intersect.y, wall1.y1, wall1.y2, 'round')
         ) {
-          const distance = Math.round(
+          const distance1 = Math.round(
             this.svg.measure({ x: wall1.x1, y: wall1.y1 }, intersect)
           );
-          if (distance > 5 && distance < len) {
+          if (distance1 > 0 && distance1 < len) {
             walls.push({
               x1: intersect.x,
               y1: intersect.y,
@@ -324,7 +325,7 @@ export class EditorService {
   filterDupicateWall(walls: WALL[]): WALL[] {
     const newWalls: WALL[] = [];
     walls.forEach((w) => {
-      const inNewWall = newWalls.find(
+      const inNewWall = newWalls.some(
         (n) =>
           ObjectUtils.compare(w, n) ||
           ObjectUtils.compare(this.invertWall(w), n)
@@ -342,7 +343,7 @@ export class EditorService {
         this.svg.measure(
           { x: wall.x1, y: wall.y1 },
           { x: wall.x2, y: wall.y2 }
-        ) > 10
+        ) >= 10
       );
     });
   }
@@ -350,10 +351,10 @@ export class EditorService {
   nodeList(walls: WALL[]): { x: number; y: number }[] {
     const nodes: { x: number; y: number }[] = [];
     for (const wall of walls) {
-      const inNodeFrom = nodes.find((n) =>
+      const inNodeFrom = nodes.some((n) =>
         this.nearPoint(n, { x: wall.x1, y: wall.y1 }, 1)
       );
-      const inNodeTo = nodes.find((n) =>
+      const inNodeTo = nodes.some((n) =>
         this.nearPoint(n, { x: wall.x2, y: wall.y2 }, 1)
       );
       if (!inNodeFrom) {
@@ -393,24 +394,38 @@ export class EditorService {
     nextNode?: { x: number; y: number; junction: { x: number; y: number }[] },
     prevNode?: { x: number; y: number; junction: { x: number; y: number }[] },
     seg: number = 0,
-    result: { x: number; y: number }[] = []
+    result: { x: number; y: number }[] = [],
   ): { x: number; y: number }[] {
     const node = nextNode || startNode;
 
-    if (seg >= node.junction.length) { return result; }
+    // if complete room or end segment
+    if (
+      (result.length > 0 &&
+        result[0].x === result[result.length - 1].x &&
+        result[0].y === result[result.length - 1].y) ||
+      seg >= node.junction.length
+    ) {
+      return result;
+    }
     const j = node.junction[seg];
     const destNode = nodes.find((n) => n.x === j.x && n.y === j.y);
     if (!destNode) { return result; }
     // check next node is not start node
     const isStartNode = startNode.x === j.x && startNode.y === j.y;
-    const isPrevNode = prevNode && (prevNode.x === j.x && prevNode.y === j.y);
-    if (!isStartNode && !isPrevNode) {
-      result = this.findWay(nodes, startNode, destNode, node, seg, result);
-      result.push(j);
-    } else if (seg === node.junction.length - 1 && !isPrevNode) {
+    const isPrevNode = prevNode && prevNode.x === j.x && prevNode.y === j.y;
+    console.log(
+      node,
+      destNode,
+      isPrevNode ? 'Prev' : 'Not prev',
+      isStartNode ? 'Start' : 'Not start',
+    );
+    if (isPrevNode) {
+      result = this.findWay(nodes, startNode, node, prevNode, ++seg, result);
+    } else if (isStartNode) {
       result.push(j);
     } else {
-      result = this.findWay(nodes, startNode, node, prevNode, seg + 1, result);
+      result = this.findWay(nodes, startNode, destNode, node, 0, result);
+      result.push(j);
     }
 
     return result;
@@ -423,15 +438,15 @@ export class EditorService {
     const ROOM: { x: number; y: number }[][] = [];
 
     for (const node of nodes) {
-      const inRoomNode = ROOM_NODE.find((r) =>
-        r.find((p) => p.x === node.x && p.y === node.y)
+      const inRoomNode = ROOM_NODE.some((r) =>
+        r.some((p) => p.x === node.x && p.y === node.y)
       );
       if (inRoomNode) {
         continue;
       }
+      console.log('find from node', node);
       const room = this.findWay(nodes, node);
       room.push({ x: node.x, y: node.y });
-      console.log(node, room);
       ROOM_NODE.push(room);
 
       if (
@@ -458,8 +473,9 @@ export class EditorService {
       const junction = this.junctionPoint(node, walls);
       junctionPoints.push(junction);
     }
-    const rooms = this.findRoom(junctionPoints);
     console.log('------------------------');
+    console.log('junctionPoints', junctionPoints);
+    const rooms = this.findRoom(junctionPoints);
 
     for (const room of rooms) {
       let d = `M ${room[0].x},${room[0].y}`;
