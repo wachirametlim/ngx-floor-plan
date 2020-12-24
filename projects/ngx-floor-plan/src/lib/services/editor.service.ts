@@ -67,13 +67,13 @@ export class EditorService {
     }
   }
 
-  snapPointDrawing(el: SVGElement, event: MouseEvent, walls: WALL[]): void {
+  snapPointDrawing(el: SVGElement, event: MouseEvent, walls: WALL[], snap?: 'direction'): void {
     this.clearElement(el);
 
     const snapGrid = this.snapGrid(event.offsetX, event.offsetY, 'on');
     const sPoint = this.snapWallNode(snapGrid.x, snapGrid.y, walls);
-    if (sPoint) {
-      const circle = this.svg.circle(sPoint.x, sPoint.y, 5);
+    const drawSnapPoint = (x: number, y: number) => {
+      const circle = this.svg.circle(x, y, 5);
       el.append(
         this.svg.create('path', {
           d: circle,
@@ -82,33 +82,47 @@ export class EditorService {
           fill: '#57d2ff',
         })
       );
+    };
+    const drawSnapWallPoint = (x: number, y: number) => {
+      const circle = this.svg.circle(x, y, 5);
+      el.append(
+        this.svg.create('path', {
+          d: circle,
+          stroke: 'none',
+          fill: '#0f0',
+        })
+      );
+    };
+
+    if (sPoint) {
+      drawSnapPoint(sPoint.x, sPoint.y);
     } else {
       const swPoint = this.snapWall(snapGrid.x, snapGrid.y, walls);
       if (swPoint) {
-        const circle = this.svg.circle(swPoint.x, swPoint.y, 5);
-        el.append(
-          this.svg.create('path', {
-            d: circle,
-            stroke: 'none',
-            fill: '#0f0',
-          })
-        );
+        const nearSPoint = this.snapWallNode(swPoint.x, swPoint.y, walls);
+        if (nearSPoint) {
+          drawSnapPoint(nearSPoint.x, nearSPoint.y);
+        } else {
+          drawSnapWallPoint(swPoint.x, swPoint.y);
+        }
       }
     }
 
-    const dPoint = this.snapDirectionPoint(snapGrid.x, snapGrid.y, walls);
-    if (dPoint) {
-      el.append(
-        this.svg.create('line', {
-          x1: snapGrid.x,
-          y1: snapGrid.y,
-          x2: dPoint.x,
-          y2: dPoint.y,
-          stroke: '#b5b5b5',
-          'stroke-width': 3,
-          'stroke-opacity': 0.5,
-        })
-      );
+    if (snap) {
+      const dPoint = this.snapDirectionPoint(snapGrid.x, snapGrid.y, walls);
+      if (dPoint) {
+        el.append(
+          this.svg.create('line', {
+            x1: snapGrid.x,
+            y1: snapGrid.y,
+            x2: dPoint.x,
+            y2: dPoint.y,
+            stroke: '#b5b5b5',
+            'stroke-width': 3,
+            'stroke-opacity': 0.5,
+          })
+        );
+      }
     }
   }
 
@@ -480,6 +494,7 @@ export class EditorService {
 
   roomDrawing(elRoom: SVGElement, walls: WALL[]): void {
     this.clearElement(elRoom);
+    console.log(walls);
     const nodes = this.nodeList(walls);
 
     const junctionPoints: {

@@ -53,12 +53,16 @@ export class ContentComponent implements OnInit, AfterViewInit {
     if (event.button === MOUSE_BUTTON.left) {
       this.mblClicked = true;
       const snapGrid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
-      const snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls);
       const snapNode = this.editor.snapWallNode(snapGrid.x, snapGrid.y, this.walls);
+      let snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls);
+      if (snapWall) {
+        const nearNode = this.editor.snapWallNode(snapWall.x, snapWall.y, this.walls);
+        if (nearNode) { snapWall = nearNode; }
+      }
 
       switch (this.selectedTool) {
         case TOOL.wall: {
-          const snap = snapWall || snapNode || snapGrid;
+          const snap = snapNode || snapWall || snapGrid;
           this.walls.push(new WALL(snap.x, snap.y, snap.x, snap.y));
           this.selectedWallIndex = this.walls.length - 1;
           break;
@@ -102,9 +106,13 @@ export class ContentComponent implements OnInit, AfterViewInit {
   onContentMouseMove = (event: MouseEvent): void => {
     if (this.mblClicked && this.selectedWallIndex !== null) {
       const snapGrid = this.editor.snapGrid(event.offsetX, event.offsetY, 'on');
-      const snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls, 'draw');
       const snapNode = this.editor.snapWallNode(snapGrid.x, snapGrid.y, this.walls, 'draw');
-      const snap = snapWall || snapNode || snapGrid;
+      let snapWall = this.editor.snapWall(snapGrid.x, snapGrid.y, this.walls, 'draw');
+      if (snapWall) {
+        const nearNode = this.editor.snapWallNode(snapWall.x, snapWall.y, this.walls, 'draw');
+        if (nearNode) { snapWall = nearNode; }
+      }
+      const snap = snapNode || snapWall || snapGrid;
 
       if (typeof this.selectedWallIndex === 'number') {
         this.walls[this.selectedWallIndex].x2 = snap.x;
@@ -139,6 +147,10 @@ export class ContentComponent implements OnInit, AfterViewInit {
 
   drawSnapPoint(event: MouseEvent): void {
     const svg: SVGElement = this.snapPointEl.nativeElement;
-    this.editor.snapPointDrawing(svg, event, this.walls);
+    if (this.selectedTool === TOOL.wall) {
+      this.editor.snapPointDrawing(svg, event, this.walls, 'direction');
+    } else {
+      this.editor.snapPointDrawing(svg, event, this.walls);
+    }
   }
 }
