@@ -388,64 +388,65 @@ export class EditorService {
     };
   }
 
-  findWay(
+  findWays(
     nodes: { x: number; y: number; junction: { x: number; y: number }[] }[],
     startNode: { x: number; y: number; junction: { x: number; y: number }[] },
+    result: { x: number; y: number; }[],
     nextNode?: { x: number; y: number; junction: { x: number; y: number }[] },
     prevNode?: { x: number; y: number; junction: { x: number; y: number }[] },
     seg: number = 0,
-    result: { x: number; y: number }[] = [],
     passNode: { x: number; y: number }[] = [],
     passSeg: number[] = [],
-  ): { x: number; y: number }[] {
+  ): void {
     const node = nextNode || startNode;
     // if complete room or end segment
-    if (
-      (result.length > 0 &&
-        result[0].x === result[result.length - 1].x &&
-        result[0].y === result[result.length - 1].y) ||
-      seg >= node.junction.length
-    ) {
-      return result;
-    }
-    const j = node.junction[seg];
-    const destNode = nodes.find((n) => n.x === j.x && n.y === j.y);
-    if (!destNode) { return result; }
-    // check next node is not start node
-    const isStartNode = startNode.x === j.x && startNode.y === j.y;
-    const isPrevNode = prevNode && prevNode.x === j.x && prevNode.y === j.y;
-    const passedIndex = passNode.findIndex((n) => n.x === j.x && n.y === j.y);
+    if (seg >= node.junction.length) { return; }
+
+    const destPoint = node.junction[seg];
+    const destNode = nodes.find((n) => n.x === destPoint.x && n.y === destPoint.y);
+
+    if (!destNode) { return; }
+    const isStartNode = startNode.x === destPoint.x && startNode.y === destPoint.y;
+    const isPrevNode = prevNode && prevNode.x === destPoint.x && prevNode.y === destPoint.y;
+    const passedIndex = passNode.findIndex((n) => n.x === destPoint.x && n.y === destPoint.y);
+    const isJunc = node.junction.length > 2;
 
     if (!isPrevNode && !isStartNode) {
       passNode.push({ x: node.x, y: node.y });
       passSeg.push(seg);
     }
+    console.log(
+      `%c${node.x},${node.y} \u2192 ${destNode.x},${destNode.y}`,
+      'color: #0000ff', // for color in log
+      isPrevNode ? 'Prev' : 'NotPrev',
+      isStartNode ? 'Start' : 'NotStart',
+      passedIndex >= 0 ? 'Passed' : 'NotPassed',
+      isJunc ? 'Junc' : 'NotJunc',
+      `result = ${result.length}`
+    );
 
     if (isPrevNode) {
-      result = this.findWay(nodes, startNode, node, prevNode, ++seg, result, passNode, passSeg);
+      this.findWays(nodes, startNode, result, node, prevNode, ++seg, passNode, passSeg);
     } else if (isStartNode) {
-      result.push(j);
+      result.push(destPoint);
     } else if (passedIndex >= 0) {
-      const passed = nodes.find((n) => n.x === passNode[passedIndex].x && n.y === passNode[passedIndex].y);
-      const prev = nodes.find((n) => n.x === passNode[passedIndex - 1].x && n.y === passNode[passedIndex - 1].y);
-      const s = passSeg[passedIndex];
-      passNode = passNode.slice(0, passedIndex);
-      passSeg = passSeg.slice(0, passedIndex);
-
-      result = this.findWay(nodes, startNode, passed, prev, s + 1, result, passNode, passSeg);
-      result.push({ x: passed.x, y: passed.y });
+      if (isJunc) {
+        this.findWays(nodes, startNode, result, node, prevNode, ++seg, passNode, passSeg);
+      } else {
+        const passed = nodes.find((n) => n.x === passNode[passedIndex].x && n.y === passNode[passedIndex].y);
+        const prev = nodes.find((n) => n.x === passNode[passedIndex - 1].x && n.y === passNode[passedIndex - 1].y);
+        const s = passSeg[passedIndex];
+        passNode = passNode.slice(0, passedIndex);
+        passSeg = passSeg.slice(0, passedIndex);
+        console.log(`find passed, remove result`);
+        result.splice(passedIndex); // remove passed result
+        result.push({ x: passed.x, y: passed.y });
+        this.findWays(nodes, startNode, result, passed, prev, s + 1, passNode, passSeg);
+      }
     } else {
-      result = this.findWay(nodes, startNode, destNode, node, 0, result, passNode, passSeg);
-      result.push(j);
+      result.push(destPoint);
+      this.findWays(nodes, startNode, result, destNode, node, 0, passNode, passSeg);
     }
-    console.log(
-      node,
-      destNode,
-      isPrevNode ? 'Prev' : 'Not prev',
-      isStartNode ? 'Start' : 'Not start',
-      passedIndex >= 0 ? 'Passed' : 'Not passed'
-    );
-    return result;
   }
 
   findRoom(
@@ -460,9 +461,10 @@ export class EditorService {
       );
       console.log('find from node', node, inRoomNode, ROOM_NODE);
       if (inRoomNode) { continue; }
-      const room = this.findWay(nodes, node);
-      if (room){
-        room.push({ x: node.x, y: node.y });
+      const room = [];
+      room.push({ x: node.x, y: node.y });
+      this.findWays(nodes, node, room);
+      if (room.length > 1){
         ROOM_NODE.push(room);
         if (
           room.length > 0 &&
