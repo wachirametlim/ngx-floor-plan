@@ -362,6 +362,15 @@ export class EditorService {
     });
   }
 
+  sortNode(nodes: { x: number; y: number }[]): { x: number; y: number }[] {
+    return nodes
+      .sort((n1, n2) => {
+        const sortX = Math.sign(n1.x - n2.x);
+        const sortY = Math.sign(n1.y - n2.y);
+        return sortX || sortY;
+      });
+  }
+
   nodeList(walls: WALL[]): { x: number; y: number }[] {
     const nodes: { x: number; y: number }[] = [];
     for (const wall of walls) {
@@ -378,7 +387,7 @@ export class EditorService {
         nodes.push({ x: wall.x2, y: wall.y2 });
       }
     }
-    return nodes;
+    return this.sortNode(nodes);
   }
 
   junctionPoint(
@@ -398,7 +407,7 @@ export class EditorService {
     return {
       x: fromPoint.x,
       y: fromPoint.y,
-      junction,
+      junction: this.sortNode(junction),
     };
   }
 
@@ -440,7 +449,20 @@ export class EditorService {
     );
 
     if (isPrevNode) {
-      this.findWays(nodes, startNode, result, node, prevNode, ++seg, passNode, passSeg);
+      if (isJunc && seg === node.junction.length - 1) {
+        const prevIndex = passNode.findIndex((n) => n.x === prevNode.x && n.y === prevNode.y);
+        const passed = nodes.find((n) => n.x === passNode[prevIndex].x && n.y === passNode[prevIndex].y);
+        const prev = nodes.find((n) => n.x === passNode[prevIndex - 1].x && n.y === passNode[prevIndex - 1].y);
+        const s = passSeg[prevIndex];
+        passNode = passNode.slice(0, prevIndex);
+        passSeg = passSeg.slice(0, prevIndex);
+        console.log(`back prev, remove result`);
+        result.splice(prevIndex); // remove passed result
+        result.push({ x: passed.x, y: passed.y });
+        this.findWays(nodes, startNode, result, passed, prev, s + 1, passNode, passSeg);
+      } else {
+        this.findWays(nodes, startNode, result, node, prevNode, ++seg, passNode, passSeg);
+      }
     } else if (isStartNode) {
       result.push(destPoint);
     } else if (passedIndex >= 0) {
@@ -494,8 +516,8 @@ export class EditorService {
 
   roomDrawing(elRoom: SVGElement, walls: WALL[]): void {
     this.clearElement(elRoom);
-    console.log(walls);
     const nodes = this.nodeList(walls);
+    console.log(nodes);
 
     const junctionPoints: {
       x: number;
