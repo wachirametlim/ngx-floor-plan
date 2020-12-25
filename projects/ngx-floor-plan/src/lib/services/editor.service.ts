@@ -364,11 +364,7 @@ export class EditorService {
 
   sortNode(nodes: { x: number; y: number }[]): { x: number; y: number }[] {
     return nodes
-      .sort((n1, n2) => {
-        const sortX = Math.sign(n1.x - n2.x);
-        const sortY = Math.sign(n1.y - n2.y);
-        return sortX || sortY;
-      });
+      .sort((n1, n2) => Math.sign((n1.x + n1.y) - (n2.x + n2.y)));
   }
 
   nodeList(walls: WALL[]): { x: number; y: number }[] {
@@ -424,13 +420,15 @@ export class EditorService {
     const node = nextNode || startNode;
     // if complete room or end segment
     if (seg >= node.junction.length) { return; }
+    // set previous node
+    if (!prevNode) { prevNode = node; }
 
     const destPoint = node.junction[seg];
     const destNode = nodes.find((n) => n.x === destPoint.x && n.y === destPoint.y);
-
     if (!destNode) { return; }
+
     const isStartNode = startNode.x === destPoint.x && startNode.y === destPoint.y;
-    const isPrevNode = prevNode && prevNode.x === destPoint.x && prevNode.y === destPoint.y;
+    const isPrevNode = prevNode.x === destPoint.x && prevNode.y === destPoint.y;
     const passedIndex = passNode.findIndex((n) => n.x === destPoint.x && n.y === destPoint.y);
     const isJunc = node.junction.length > 2;
 
